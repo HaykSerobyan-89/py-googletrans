@@ -3,7 +3,7 @@
 import os.path
 import re
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def get_file(*paths):
@@ -40,9 +40,9 @@ def install():
         description=get_description(),
         long_description=get_readme(),
         license='MIT',
-        author='SuHun Han',
-        author_email='ssut' '@' 'ssut.me',
-        url='https://github.com/ssut/py-googletrans',
+        author='Hayk Serobyan',
+        author_email='hayk.serobyan.89@gmail.com',
+        url='https://github.com/HaykSerobyan-89/py-googletrans',
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Education',
                      'Intended Audience :: End Users/Desktop',
@@ -58,9 +58,9 @@ def install():
         packages=find_packages(exclude=['docs', 'tests']),
         keywords='google translate translator',
         install_requires=[
-            'httpx[http2]>=0.23,<0.27.3',
+            'httpx[http2]>=0.23',
         ],
-        python_requires= '>=3.6',
+        python_requires='>=3.6',
         tests_require=[
             'pytest',
             'coveralls',

@@ -5,21 +5,19 @@ A Translation module.
 You can translate text using this module.
 """
 import random
-import typing
 import re
+import typing
 
 import httpcore
 import httpx
-from httpx import Timeout
-
 from googletrans import urls, utils
-from googletrans.gtoken import TokenAcquirer
 from googletrans.constants import (
-    DEFAULT_CLIENT_SERVICE_URLS,
-    DEFAULT_USER_AGENT, LANGCODES, LANGUAGES, SPECIAL_CASES,
-    DEFAULT_RAISE_EXCEPTION, DUMMY_DATA
+    DEFAULT_CLIENT_SERVICE_URLS, DEFAULT_RAISE_EXCEPTION, DEFAULT_USER_AGENT, DUMMY_DATA,
+    LANGCODES, LANGUAGES, SPECIAL_CASES
 )
-from googletrans.models import Translated, Detected
+from googletrans.gtoken import TokenAcquirer
+from googletrans.models import Detected, Translated
+from httpx import Timeout
 
 EXCLUDES = ('en', 'ca', 'fr')
 
@@ -31,7 +29,8 @@ class Translator:
 
     :param service_urls: google translate url list. URLs will be used randomly.
                          For example ``['translate.google.com', 'translate.google.co.kr']``
-                         To preferably use the non webapp api, service url should be translate.googleapis.com
+                         To preferably use the non webapp api, service url should be
+                         translate.googleapis.com
     :type service_urls: a sequence of strings
 
     :param user_agent: the User-Agent header to send when making requests.
@@ -52,38 +51,45 @@ class Translator:
     :type raise_exception: boolean
     """
 
-    def __init__(self, service_urls=DEFAULT_CLIENT_SERVICE_URLS, user_agent=DEFAULT_USER_AGENT,
-                 raise_exception=DEFAULT_RAISE_EXCEPTION,
-                 proxies: typing.Dict[str, httpcore.AsyncHTTPProxy] = None,
-                 timeout: Timeout = None,
-                 http2=True):
+    def __init__(
+            self, service_urls=DEFAULT_CLIENT_SERVICE_URLS, user_agent=DEFAULT_USER_AGENT,
+            raise_exception=DEFAULT_RAISE_EXCEPTION,
+            proxies: typing.Dict[str, httpcore.AsyncHTTPProxy] = None,
+            timeout: Timeout = None,
+            http2=True
+    ):
 
         self.client = httpx.Client(http2=http2)
         if proxies is not None:  # pragma: nocover
             self.client.proxies = proxies
 
-        self.client.headers.update({
-            'User-Agent': user_agent,
-        })
+        self.client.headers.update(
+            {
+                'User-Agent': user_agent,
+            }
+        )
 
         self.service_urls = ['translate.google.com']
         self.client_type = 'webapp'
         self.token_acquirer = TokenAcquirer(
-            client=self.client, host=self.service_urls[0])
+            client=self.client, host=self.service_urls[0]
+        )
 
         if timeout is not None:
             self.client.timeout = timeout
 
         if service_urls:
-            #default way of working: use the defined values from user app
+            # default way of working: use the defined values from user app
             self.service_urls = service_urls
             self.client_type = 'webapp'
             self.tok1en_acquirer = TokenAcquirer(
-                client=self.client, host=self.service_urls[0])
+                client=self.client, host=self.service_urls[0]
+            )
 
-            #if we have a service url pointing to client api we force the use of it as defaut client
+            # if we have a service url pointing to client api we force the use of it as defaut
+            # client
             for t in enumerate(service_urls):
-                api_type = re.search('googleapis',service_urls[0])
+                api_type = re.search('googleapis', service_urls[0])
                 if (api_type):
                     self.service_urls = ['translate.googleapis.com']
                     self.client_type = 'gtx'
@@ -97,12 +103,14 @@ class Translator:
         return random.choice(self.service_urls)
 
     def _translate(self, text, dest, src, override):
-        token = 'xxxx' #dummy default value here as it is not used by api client
+        token = 'xxxx'  # dummy default value here as it is not used by api client
         if self.client_type == 'webapp':
             token = self.token_acquirer.do(text)
 
-        params = utils.build_params(client=self.client_type, query=text, src=src, dest=dest,
-                                    token=token, override=override)
+        params = utils.build_params(
+            client=self.client_type, query=text, src=src, dest=dest,
+            token=token, override=override
+        )
 
         url = urls.TRANSLATE.format(host=self._pick_service_url())
         r = self.client.get(url, params=params)
@@ -112,8 +120,11 @@ class Translator:
             return data, r
 
         if self.raise_exception:
-            raise Exception('Unexpected status code "{}" from {}'.format(
-                r.status_code, self.service_urls))
+            raise Exception(
+                'Unexpected status code "{}" from {}'.format(
+                    r.status_code, self.service_urls
+                )
+            )
 
         DUMMY_DATA[0][0][0] = text
         return DUMMY_DATA, r
@@ -137,23 +148,27 @@ class Translator:
 
         for index, category in response_parts_name_mapping.items():
             extra[category] = data[index] if (
-                index < len(data) and data[index]) else None
+                    index < len(data) and data[index]) else None
 
         return extra
 
     def translate(self, text, dest='en', src='auto', **kwargs):
         """Translate text from source language to destination language
 
-        :param text: The source text(s) to be translated. Batch translation is supported via sequence input.
-        :type text: UTF-8 :class:`str`; :class:`unicode`; string sequence (list, tuple, iterator, generator)
+        :param text: The source text(s) to be translated. Batch translation is supported via
+        sequence input.
+        :type text: UTF-8 :class:`str`; :class:`unicode`; string sequence (list, tuple,
+        iterator, generator)
 
         :param dest: The language to translate the source text into.
-                     The value should be one of the language codes listed in :const:`googletrans.LANGUAGES`
+                     The value should be one of the language codes listed in
+                     :const:`googletrans.LANGUAGES`
                      or one of the language names listed in :const:`googletrans.LANGCODES`.
         :param dest: :class:`str`; :class:`unicode`
 
         :param src: The language of the source text.
-                    The value should be one of the language codes listed in :const:`googletrans.LANGUAGES`
+                    The value should be one of the language codes listed in
+                    :const:`googletrans.LANGUAGES`
                     or one of the language names listed in :const:`googletrans.LANGCODES`.
                     If a language is not specified,
                     the system will attempt to identify the source language automatically.
@@ -170,10 +185,12 @@ class Translator:
             >>> translator.translate('안녕하세요.', dest='ja')
             <Translated src=ko dest=ja text=こんにちは。 pronunciation=Kon'nichiwa.>
             >>> translator.translate('veritas lux mea', src='la')
-            <Translated src=la dest=en text=The truth is my light pronunciation=The truth is my light>
+            <Translated src=la dest=en text=The truth is my light pronunciation=The truth is my
+            light>
 
         Advanced usage:
-            >>> translations = translator.translate(['The quick brown fox', 'jumps over', 'the lazy dog'], dest='ko')
+            >>> translations = translator.translate(['The quick brown fox', 'jumps over',
+            'the lazy dog'], dest='ko')
             >>> for translation in translations:
             ...    print(translation.origin, ' -> ', translation.text)
             The quick brown fox  ->  빠른 갈색 여우
@@ -237,10 +254,12 @@ class Translator:
             pron = translated
 
         # put final values into a new Translated object
-        result = Translated(src=src, dest=dest, origin=origin,
-                            text=translated, pronunciation=pron,
-                            extra_data=extra_data,
-                            response=response)
+        result = Translated(
+            src=src, dest=dest, origin=origin,
+            text=translated, pronunciation=pron,
+            extra_data=extra_data,
+            response=response
+        )
 
         return result
 
@@ -249,7 +268,8 @@ class Translator:
 
         :param text: The source text(s) whose language you want to identify.
                      Batch detection is supported via sequence input.
-        :type text: UTF-8 :class:`str`; :class:`unicode`; string sequence (list, tuple, iterator, generator)
+        :type text: UTF-8 :class:`str`; :class:`unicode`; string sequence (list, tuple,
+        iterator, generator)
 
         :rtype: Detected
         :rtype: :class:`list` (when a list is passed)
