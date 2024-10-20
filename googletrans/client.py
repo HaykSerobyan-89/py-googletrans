@@ -10,14 +10,16 @@ import typing
 
 import httpcore
 import httpx
-from googletrans import urls, utils
-from googletrans.constants import (
+from httpx import Timeout
+
+import urls
+import utils
+from constants import (
     DEFAULT_CLIENT_SERVICE_URLS, DEFAULT_RAISE_EXCEPTION, DEFAULT_USER_AGENT, DUMMY_DATA,
     LANGCODES, LANGUAGES, SPECIAL_CASES
 )
-from googletrans.gtoken import TokenAcquirer
-from googletrans.models import Detected, Translated
-from httpx import Timeout
+from gtoken import TokenAcquirer
+from models import Detected, Translated
 
 EXCLUDES = ('en', 'ca', 'fr')
 
